@@ -12,6 +12,7 @@ from model.factory import embed_model
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+import hashlib
 
 
 class VectorStoreService:
@@ -100,7 +101,21 @@ class VectorStoreService:
                     continue
 
                 # 存入向量数据库
-                self.vector_store.add_documents(split_document)
+                # ================= 核心修改开始 =================
+                # 2. 生成基于内容的唯一 ID
+                ids = []
+                for doc in split_document:
+                    # 将页面内容和元数据（如source）组合起来进行哈希
+                    # 这样如果内容没变，ID 永远一样
+                    doc_content = doc.page_content + str(doc.metadata.get('source', ''))
+                    doc_hash = hashlib.md5(doc_content.encode('utf-8')).hexdigest()
+                    ids.append(doc_hash)
+
+                # 3. 存入向量数据库时显式传入 ids
+                # Chroma 的机制：如果 ID 已存在，会更新（Update）；如果不存在，会添加（Add）。
+                # 这完美解决了重复问题。
+                self.vector_store.add_documents(documents=split_document, ids=ids)
+                # ================= 核心修改结束 =================
 
                 save_md5(md5)
 
@@ -115,6 +130,6 @@ if __name__ == '__main__':
     vs.load_document()
 
     retriever = vs.get_retriever()
-    res = retriever.invoke('谜底')
+    res = retriever.invoke('扫地机器人')
     for r in res:
         print(r)

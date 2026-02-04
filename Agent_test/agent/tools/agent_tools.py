@@ -77,7 +77,7 @@ def generate_external_data():
 
 
 
-# @tool(description="检索指定用户在指定月份的扫地/扫拖机器人完整使用记录，以纯字符形式返回，如未检索到返回空字符串")
+@tool(description="检索指定用户在指定月份的扫地/扫拖机器人完整使用记录，以纯字符形式返回，如未检索到返回空字符串")
 def fetch_external_data(user_id: str, month: str) -> str:
     generate_external_data()
     try:
